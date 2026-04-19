@@ -1,3 +1,4 @@
+<meta charset="UTF-8">
 Vào MySQL Workbench, sau đó chọn data import, chọn Import from self-contained file, chọn file trên rồi chọn schemas cần import rồi chọn Import data là ok
 Sau đó trên eclipse kiếm file application.properties chỉnh như sau:
 
