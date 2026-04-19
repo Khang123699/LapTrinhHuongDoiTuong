@@ -11,6 +11,15 @@
 6. Nhấn **Start Import**
 
 ---
+## 2. Import project vào Eclipse
+
+1. Mở Eclipse  
+2. Chọn **File → Import**  
+3. Chọn:
+   - **Existing Maven Projects** 
+4. Nhấn **Next**  
+5. Chọn thư mục chứa project  
+6. Nhấn **Finish**
 
 ## 2. Cấu hình project
 
@@ -26,7 +35,7 @@ spring.datasource.password=mat_khau
 
 1. Mở project bằng Eclipse  
 2. Tìm file `ClothesShopApplication.java`  
-3. Click chuột phải → **Run As → Java Application**
+3. Click chuột vào rồi nhấn Run trên thanh công cụ
 
 ---
 
