@@ -21,7 +21,7 @@ spring.application.name=ten_schema_cua_ban
 spring.datasource.url=jdbc:mysql://localhost:3306/shop_db?useSSL=false&serverTimezone=UTC
 spring.datasource.username=ten_username
 spring.datasource.password=mat_khau
-
+```
 ## 3. Chạy project
 
 1. Mở project bằng Eclipse  
