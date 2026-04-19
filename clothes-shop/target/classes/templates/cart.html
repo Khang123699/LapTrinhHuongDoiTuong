@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Giỏ Hàng - Fashion Shop</title>
+    <style>
+        /* Bố cục chính */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #fff; margin: 0; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        .cart-wrapper { display: flex; gap: 40px; margin-top: 30px; }
+        .cart-items-section { flex: 7; }
+        .cart-summary-section { flex: 3; }
+        
+        .page-title { font-family: 'Georgia', serif; font-size: 36px; margin: 0; font-weight: normal; }
+        .nav-back { text-decoration: none; color: #666; font-size: 14px; display: inline-block; margin-bottom: 20px; }
+        .nav-back:hover { color: #000; }
+
+        /* Khung sản phẩm */
+        .cart-item { display: flex; border-bottom: 1px solid #eee; padding: 20px 0; }
+        .item-img { width: 100px; height: 130px; object-fit: cover; border: 1px solid #ddd; margin-right: 20px; border-radius: 4px; }
+        .item-info { flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .item-title { font-size: 18px; margin: 0 0 10px 0; color: #000; }
+        .item-variant { font-size: 14px; color: #666; margin-bottom: 15px; }
+        
+        .qty-form { display: flex; align-items: center; gap: 15px; }
+        .qty-input { width: 70px; padding: 8px 5px; font-size: 16px; text-align: center; border: 1px solid #ccc; border-radius: 4px; }
+        
+        .item-price-box { font-size: 18px; font-weight: bold; text-align: right; min-width: 120px; }
+        .price-discount { color: #e44d26; }
+        .price-original { text-decoration: line-through; color: #999; font-size: 13px; font-weight: normal; }
+        
+        .btn-delete { color: #999; text-decoration: none; font-size: 14px; }
+        .btn-delete:hover { color: #e44d26; text-decoration: underline; }
+
+        /* Tóm tắt đơn hàng */
+        .summary-box { background-color: #f9f9f9; padding: 30px; border-radius: 12px; position: sticky; top: 20px; }
+        .summary-title { font-family: 'Georgia', serif; font-size: 22px; margin: 0 0 25px 0; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 14px; }
+        .summary-row.total { font-size: 18px; font-weight: bold; border-top: 1px solid #ddd; padding-top: 20px; margin-top: 10px; }
+        
+        .btn-checkout { display: block; width: 100%; background: #000; color: #fff; padding: 18px 0; text-align: center; border-radius: 30px; text-decoration: none; font-weight: bold; margin-top: 25px; transition: 0.3s; }
+        .btn-checkout:hover { background: #333; }
+
+        /* Footer */
+        .footer { background-color: #111; color: #ddd; padding: 50px 30px 20px; margin-top: 60px; font-size: 14px; line-height: 1.8; }
+        .footer-content { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; }
+        .footer-section h3 { color: #fff; font-size: 16px; margin-bottom: 20px; text-transform: uppercase; }
+        .member-list { list-style: none; padding: 0; }
+        .member-list li { margin-bottom: 12px; display: flex; gap: 10px; }
+        .member-role { display: block; font-size: 12px; color: #888; }
+        .footer-bottom { text-align: center; padding-top: 30px; margin-top: 40px; border-top: 1px solid #333; color: #666; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="/products" class="nav-back">← Tiếp tục mua sắm</a>
+    <h1 class="page-title">Giỏ hàng của bạn</h1>
+
+    <div class="cart-wrapper">
+        <div class="cart-items-section">
+            <div th:if="${#lists.isEmpty(cartList)}" style="padding: 40px; text-align: center; border: 1px dashed #ccc;">
+                Giỏ hàng trống.
+            </div>
+
+            <div th:each="item : ${cartList}" class="cart-item">
+                <img th:src="${item.inventory.product.imageUrl != null ? item.inventory.product.imageUrl : 'https://via.placeholder.com/100x130'}" class="item-img">
+                
+                <div class="item-info">
+                    <div>
+                        <h3 class="item-title" th:text="${item.inventory.product.name}"></h3>
+                        <div class="item-variant">
+                            Màu: <span th:text="${item.inventory.color}"></span> | Size: <span th:text="${item.inventory.size}"></span>
+                        </div>
+                    </div>
+                    
+                    <form th:action="@{/cart/update}" method="post" class="qty-form">
+                        <input type="hidden" name="cartId" th:value="${item.id}" />
+                        <label>Số lượng:</label>
+                        <input type="number" name="quantity" th:value="${item.quantity}" min="1" class="qty-input" onchange="this.form.submit()"/>
+                        <span style="color: #eee">|</span>
+                        <a th:href="@{/cart/remove/{id}(id=${item.id})}" class="btn-delete">Xóa</a>
+                    </form>
+                </div>
+                
+                <div class="item-price-box">
+                    <th:block th:if="${item.inventory.product.discountPrice != null && item.inventory.product.discountPrice < item.inventory.product.price}">
+                        <span class="price-discount" th:text="${#numbers.formatDecimal(item.inventory.product.discountPrice * item.quantity, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+                        <br/>
+                        <span class="price-original" th:text="${#numbers.formatDecimal(item.inventory.product.price * item.quantity, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+                    </th:block>
+                    <th:block th:if="${item.inventory.product.discountPrice == null || item.inventory.product.discountPrice >= item.inventory.product.price}">
+                        <span th:text="${#numbers.formatDecimal(item.inventory.product.price * item.quantity, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+                    </th:block>
+                </div>
+            </div>
+        </div>
+
+        <div class="cart-summary-section">
+            <div class="summary-box">
+                <h3 class="summary-title">Tổng đơn hàng</h3>
+                <div class="summary-row">
+                    <span>Tạm tính</span>
+                    <span th:text="${#numbers.formatDecimal(totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+                </div>
+                <div class="summary-row total">
+                    <span>Tổng cộng</span>
+                    <span th:text="${#numbers.formatDecimal(totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+                </div>
+                <a href="/checkout" class="btn-checkout">THANH TOÁN</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="footer">
+    <div class="footer-content">
+        <div class="footer-section">
+            <h3>Hệ Thống</h3>
+            <p><strong>Dự án:</strong> Website quản lý shop quần áo thời trang</p>
+            <p>Phát triển bởi Nhóm 4 nhằm tối ưu hóa trải nghiệm mua sắm và quản lý cửa hàng chuyên nghiệp.</p>
+        </div>
+        <div class="footer-section">
+            <h3>Kỹ Thuật</h3>
+            <p><strong>Nhóm:</strong> Nhóm 4</p>
+            <p><strong>Công nghệ:</strong> Java Spring Boot, Thymeleaf, JPA, MySQL.</p>
+        </div>
+        <div class="footer-section">
+            <h3>Đội Ngũ Phát Triển</h3>
+            <ul class="member-list">
+                <li>👤 <div><strong>Võ Trung Khang</strong><span class="member-role">UI, Test, Document</span></div></li>
+                <li>👤 <div><strong>Phan Minh Hiền</strong><span class="member-role">Database Architect</span></div></li>
+                <li>👤 <div><strong>Nguyễn Nhật Khang</strong><span class="member-role">Module Cart</span></div></li>
+                <li>👤 <div><strong>Lê Tiến Đức</strong><span class="member-role">Module Product</span></div></li>
+                <li>👤 <div><strong>Huỳnh Tấn Đạt</strong><span class="member-role">Module User</span></div></li>
+                <li>👤 <div><strong>Trần Kỳ Hiệp</strong><span class="member-role">Module Order</span></div></li>
+            </ul>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        &copy; 2026 Website quản lý shop quần áo thời trang. All rights reserved.
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Chi Tiết Sản Phẩm</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f9f9f9; padding: 40px; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; display: flex; gap: 50px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        .image-box { flex: 1; }
+        .image-box img { width: 100%; border-radius: 8px; }
+        .info-box { flex: 1; }
+        .price { color: #e44d26; font-size: 28px; font-weight: bold; margin: 20px 0; }
+        select, input { padding: 12px; margin: 10px 0; width: 100%; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; }
+        .btn-add { background: #000; color: #fff; width: 100%; padding: 18px; border: none; font-size: 18px; font-weight: bold; cursor: pointer; border-radius: 6px; margin-top: 20px; transition: 0.3s; }
+        .btn-add:hover { background: #333; }
+        .stock-tag { color: #2ecc71; font-weight: bold; background: #e8f8f0; padding: 5px 10px; border-radius: 4px; display: inline-block; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <a href="/products" style="text-decoration: none; color: #666; font-weight: bold;">← Quay lại danh sách</a>
+    
+    <div class="container">
+        <div class="image-box">
+            <img src="https://via.placeholder.com/450x600" alt="Product">
+        </div>
+        <div class="info-box">
+            <h1 th:text="${product.name}" style="margin: 0;"></h1>
+            <p th:text="${product.description}" style="color: #666; line-height: 1.6;"></p>
+            <p class="price" th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></p>
+            
+            <label><strong>Chọn Màu sắc & Size:</strong></label>
+            <select id="inventorySelect" onchange="updateStockInfo()">
+                <option th:each="inv : ${product.inventories}" 
+                        th:value="${inv.id}" 
+                        th:data-stock="${inv.stockQuantity}"
+                        th:text="${inv.color} + ' - Size ' + ${inv.size}">
+                </option>
+            </select>
+
+            <div class="stock-tag">Tồn kho: <span id="stockNum">0</span> sản phẩm</div>
+
+            <label style="display: block; margin-top: 20px;"><strong>Số lượng mua:</strong></label>
+            <input type="number" id="buyQty" value="1" min="1">
+            
+            <button type="button" class="btn-add" th:data-price="${product.price}" onclick="handleAddToCart(this)">THÊM VÀO GIỎ HÀNG</button>
+        </div>
+    </div>
+
+    <script>
+        // Cập nhật số lượng tồn kho tự động khi chọn dropdown
+        function updateStockInfo() {
+            const select = document.getElementById("inventorySelect");
+            if (select.options.length > 0) {
+                const stock = select.options[select.selectedIndex].getAttribute("data-stock");
+                document.getElementById("stockNum").innerText = stock;
+                document.getElementById("buyQty").max = stock;
+            }
+        }
+        window.onload = updateStockInfo;
+
+        // Hàm xử lý thêm vào giỏ hàng
+        function handleAddToCart(btn) {
+            const invId = document.getElementById("inventorySelect").value;
+            const qty = document.getElementById("buyQty").value;
+            const price = btn.getAttribute('data-price');
+
+            // Kiểm tra số lượng mua
+            const currentStock = parseInt(document.getElementById("stockNum").innerText);
+            if (parseInt(qty) > currentStock) {
+                alert("Số lượng mua vượt quá tồn kho!");
+                return;
+            }
+
+            const data = new URLSearchParams();
+            data.append('inventoryId', invId);
+            data.append('quantity', qty);
+            data.append('price', price);
+
+            fetch('/cart/add-ajax', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: data.toString()
+            }).then(res => {
+                if(res.ok) {
+                    alert("Đã thêm vào giỏ hàng thành công!");
+                    // Đã thay đổi điều hướng: Chuyển về trang danh sách sản phẩm
+                    window.location.href = "/products"; 
+                } else {
+                    alert("Có lỗi xảy ra, vui lòng thử lại!");
+                }
+            }).catch(error => {
+                console.error("Lỗi:", error);
+                alert("Lỗi kết nối đến máy chủ.");
+            });
+        }
+    </script>
+</body>
+</html>

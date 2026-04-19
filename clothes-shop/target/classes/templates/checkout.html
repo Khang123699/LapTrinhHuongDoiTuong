@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Thanh Toán - Fashion Shop</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #fafafa; padding: 40px; margin: 0; }
+        
+        /* Chuyển class này dùng cho thẻ form */
+        .checkout-wrapper { max-width: 1200px; margin: 0 auto; display: flex; gap: 40px; }
+        
+        /* Cột trái: Form thông tin */
+        .form-section { flex: 6; background: transparent; }
+        .form-section h1 { font-size: 32px; font-weight: bold; text-transform: uppercase; margin-bottom: 10px; }
+        .section-title { font-weight: bold; margin: 30px 0 15px 0; font-size: 14px; background: #eee; display: inline-block; padding: 5px 10px; }
+        
+        .input-group { margin-bottom: 15px; display: flex; gap: 20px; }
+        .input-box { flex: 1; }
+        .input-box label { display: block; font-size: 12px; color: #666; margin-bottom: 5px; text-transform: uppercase; }
+        .input-box input, .input-box select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; outline: none; box-sizing: border-box; }
+        
+        .payment-method { border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 4px; background: #fff; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .payment-method.active { border-color: #000; font-weight: bold; }
+        
+        /* Cột phải: Tóm tắt đơn hàng */
+        .summary-section { flex: 4; background: #f4f4f4; padding: 30px; border-radius: 8px; height: fit-content; position: sticky; top: 40px;}
+        .summary-title { font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #ddd; padding-bottom: 15px; margin-top: 0; }
+        
+        .summary-item { display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center; }
+        .summary-item img { width: 60px; height: 80px; object-fit: cover; border-radius: 4px; }
+        .item-info { flex: 1; margin-left: 15px; font-size: 14px; }
+        .item-price { font-weight: bold; }
+        
+        .totals-row { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 10px; }
+        .total-final { display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px; }
+        
+        .btn-submit { background: #000; color: #fff; width: 100%; padding: 18px; text-align: center; font-weight: bold; border: none; cursor: pointer; text-transform: uppercase; border-radius: 4px; margin-top: 20px; transition: 0.3s;}
+        .btn-submit:hover { background: #333; }
+        
+        .back-link { text-decoration: none; color: #666; font-size: 14px; display: block; margin-bottom: 20px;}
+    </style>
+</head>
+<body>
+
+<form th:action="@{/checkout/process}" method="post" class="checkout-wrapper">
+    
+    <div class="form-section">
+        <a href="/cart" class="back-link">← QUAY LẠI GIỎ HÀNG</a>
+        <h1>THANH TOÁN</h1>
+        <p style="color: #666;">Hoàn tất đơn hàng của bạn với Fashion Shop.</p>
+
+        <div class="section-title">01 THÔNG TIN GIAO HÀNG</div>
+        
+        <div class="input-group">
+            <div class="input-box"><label>Họ và tên</label><input type="text" name="customerName" required></div>
+            <div class="input-box"><label>Số điện thoại</label><input type="text" name="phone" required></div>
+        </div>
+        <div class="input-box" style="margin-bottom: 15px;"><label>Email</label><input type="email" name="email" required></div>
+        <div class="input-box" style="margin-bottom: 15px;"><label>Địa chỉ nhận hàng</label><input type="text" name="address" required></div>
+        <div class="input-group">
+            <div class="input-box">
+                <label>Tỉnh / Thành phố</label>
+                <select name="province" id="province" onchange="updateTotal()" required>
+                    <option value="TPHCM">TP. Hồ Chí Minh</option>
+                    <option value="HN">Hà Nội</option>
+                    <option value="DN">Đà Nẵng</option>
+                    <option value="OTHER">Tỉnh thành khác</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="section-title">02 PHƯƠNG THỨC GIAO HÀNG</div>
+        <label class="payment-method">
+            <input type="radio" name="shippingMethod" value="NORMAL" checked onchange="updateTotal()">
+            Giao hàng Thường (Từ 3-5 ngày)
+        </label>
+        <label class="payment-method">
+            <input type="radio" name="shippingMethod" value="FAST" onchange="updateTotal()">
+            Giao hàng Hỏa tốc (Nhận trong ngày)
+        </label>
+
+        <div class="section-title">03 PHƯƠNG THỨC THANH TOÁN</div>
+        
+        <label class="payment-method">
+            <input type="radio" name="paymentMethod" value="CREDIT_CARD">
+            Thẻ tín dụng / Ghi nợ (VISA, MASTERCARD)
+        </label>
+        <label class="payment-method">
+            <input type="radio" name="paymentMethod" value="E_WALLET">
+            Ví điện tử (MOMO, ZALOPAY)
+        </label>
+        <label class="payment-method active">
+            <input type="radio" name="paymentMethod" value="COD" checked>
+            Thanh toán khi nhận hàng (COD)
+        </label>
+    </div>
+
+    <div class="summary-section">
+        <h3 class="summary-title">TÓM TẮT ĐƠN HÀNG</h3>
+        
+        <div th:each="item : ${cartList}" class="summary-item">
+            <img th:src="${item.inventory.product.imageUrl != null ? item.inventory.product.imageUrl : 'https://via.placeholder.com/60x80'}" alt="Product">
+            <div class="item-info">
+                <div style="font-weight: bold; text-transform: uppercase;" th:text="${item.inventory.product.name}"></div>
+                <div style="color: #666; font-size: 12px; margin-top: 5px;">Màu: <span th:text="${item.inventory.color}"></span> | Size: <span th:text="${item.inventory.size}"></span></div>
+                <div style="color: #666; font-size: 12px;">Số lượng: x<span th:text="${item.quantity}"></span></div>
+            </div>
+            <div class="item-price" th:text="${#numbers.formatDecimal(item.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'"></div>
+        </div>
+
+        <div style="margin-top: 30px; border-top: 1px solid #ddd; padding-top: 20px;">
+            <div class="totals-row"><span>TỔNG TIỀN HÀNG</span> <strong th:text="${#numbers.formatDecimal(totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></strong></div>
+            <div class="totals-row"><span>PHÍ VẬN CHUYỂN</span> <strong id="shippingFeeDisplay" style="color: #e44d26;">MIỄN PHÍ</strong></div>
+            <div class="totals-row"><span>GIẢM GIÁ</span> <strong>0 đ</strong></div>
+            
+            <div class="total-final">
+                <span>TỔNG CỘNG</span>
+                <span id="finalTotalDisplay" th:text="${#numbers.formatDecimal(totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-submit">HOÀN TẤT ĐẶT HÀNG</button>
+    </div>
+    
+</form>
+
+<script th:inline="javascript">
+    // Lấy tổng tiền hàng từ biến model của Spring
+    const subtotal = /*[[${totalAmount}]]*/ 0;
+
+    function updateTotal() {
+        const province = document.getElementById('province').value;
+        const method = document.querySelector('input[name="shippingMethod"]:checked').value;
+        
+        let fee = 0;
+        // Logic tính phí theo tỉnh thành
+        if (province === 'TPHCM') {
+            fee = 0;
+        } else if (province === 'DN') {
+            fee = 30000;
+        } else if (province === 'HN') {
+            fee = 50000;
+        } else {
+            fee = 35000;
+        }
+
+        // Logic nhân đôi phí nếu chọn Hỏa tốc
+        if (method === 'FAST') {
+        	if (province === 'TPHCM') {
+                fee = 30000;
+            } else if (province === 'DN') {
+                fee = 60000;
+            } else if (province === 'HN') {
+                fee = 100000;
+            } else {
+                fee = 70000;
+            }
+        }
+        // Hàm format tiền tệ (thêm dấu phẩy)
+        const formatCurrency = (amount) => {
+            return new Intl.NumberFormat('en-US').format(amount) + ' đ';
+        };
+
+        // Cập nhật giao diện
+        const feeDisplay = document.getElementById('shippingFeeDisplay');
+        if (fee === 0) {
+            feeDisplay.innerText = 'MIỄN PHÍ';
+        } else {
+            feeDisplay.innerText = formatCurrency(fee);
+        }
+
+        // Tính và hiển thị Tổng thanh toán cuối cùng
+        const finalTotal = subtotal + fee;
+        document.getElementById('finalTotalDisplay').innerText = formatCurrency(finalTotal);
+    }
+
+    // Tự động chạy một lần khi tải trang để set giá trị mặc định
+    window.onload = updateTotal;
+</script>
+
+</body>
+</html>
