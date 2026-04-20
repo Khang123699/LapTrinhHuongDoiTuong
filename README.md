@@ -31,6 +31,7 @@ spring.datasource.url=jdbc:mysql://localhost:3306/shop_db?useSSL=false&serverTim
 spring.datasource.username=ten_username
 spring.datasource.password=mat_khau
 ```
+Hoặc chụp hình MySQL WorkBecnh rồi gửi chat để nó viết giùm
 ## 3. Chạy project
 
 1. Mở project bằng Eclipse  
